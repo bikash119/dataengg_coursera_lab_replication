@@ -62,6 +62,9 @@ resource "aws_security_group" "mysql_sg" {
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
+  timeouts {
+    delete = "10m"
+  }
 }
 
 resource "aws_vpc_security_group_ingress_rule" "allow_mysql_ipv4" {
