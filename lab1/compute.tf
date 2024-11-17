@@ -16,7 +16,7 @@ resource "aws_instance" "bastion_host" {
   instance_market_options {
     market_type = "spot"
     spot_options {
-      max_price = 0.0031
+      max_price = 0.0032
     }
   }
   instance_type = "t3.micro"
@@ -45,7 +45,7 @@ resource "aws_instance" "bastion_host_b" {
   instance_market_options {
     market_type = "spot"
     spot_options {
-      max_price = 0.0031
+      max_price = 0.0032
     }
   }
   instance_type = "t3.micro"
