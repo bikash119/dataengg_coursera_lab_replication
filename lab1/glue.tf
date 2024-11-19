@@ -17,7 +17,7 @@ resource "aws_glue_connection" "lab1" {
   }
 }
 
-resource "aws_glue_crawler" "example" {
+resource "aws_glue_crawler" "lab1" {
   database_name = aws_glue_catalog_database.lab1.name
   name          = "lab1"
   role          = aws_iam_role.glue_role.arn
@@ -34,7 +34,7 @@ resource "aws_glue_job" "lab1" {
 
   command {
     name            = "glueetl"
-    script_location = "s3://${aws_s3_bucket.scripts.id}/${aws_s3_object.glue_job_script.id}"
+    script_location = "s3://aws_s3_bucket.scripts.id/aws_s3_object.glue_job_script.id"
     python_version  = 3
   }
 }

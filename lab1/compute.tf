@@ -29,6 +29,35 @@ resource "aws_instance" "bastion_host" {
     sudo yum update -y
     sudo yum install -y mysql
     sudo yum install -y ec2-instance-connect
+    yum install -y aws-cli
+
+    # Create script directory
+    mkdir -p /opt/mysql-loader
+    
+    # Create the loader script
+    cat << 'SCRIPT' > /opt/mysql-loader/load_data.sh
+    #!/bin/bash
+    
+    # Download SQL file from S3
+    aws s3 cp s3://aws_s3_bucket.scripts.id/aws_s3_object.mysql_data_script.id /opt/mysql-loader/data.sql
+    
+    # Execute SQL file
+    mysql \
+      -h aws_db_instance.default.endpoint \
+      -u foo \
+      -p foobarbaz \
+      mydb \
+      < /opt/mysql-loader/data.sql
+    
+    # Clean up
+    rm -f /opt/mysql-loader/data.sql
+    SCRIPT
+    
+    # Make script executable
+    chmod +x /opt/mysql-loader/load_data.sh
+    
+    # Run the loader script and log output
+    /opt/mysql-loader/load_data.sh > /opt/mysql-loader/load.log 2>&1
     EOF
   root_block_device {
     volume_size = 10

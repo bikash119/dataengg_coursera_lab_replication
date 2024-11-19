@@ -48,23 +48,30 @@ resource "aws_vpc_security_group_ingress_rule" "allow_ssh_ipv4" {
 
 }
 resource "aws_security_group" "mysql_sg" {
-  name        = "allow_mysql"
-  description = "Allow tcp inbound traffic and all outbound traffic"
-  vpc_id      = aws_vpc.lab1.id
-
+  name                   = "allow_mysql"
+  description            = "Allow tcp inbound traffic and all outbound traffic"
+  vpc_id                 = aws_vpc.lab1.id
+  revoke_rules_on_delete = true
   tags = {
     Name = "allow_mysql"
-  }
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
   }
   timeouts {
     delete = "10m"
   }
+
+  lifecycle {
+    # This helps with deletion order
+    create_before_destroy = true
+  }
+
+}
+
+resource "aws_vpc_security_group_egress_rule" "mysql_sg_egress" {
+  security_group_id = aws_security_group.mysql_sg.id
+  cidr_ipv4   = "0.0.0.0/0"
+  from_port   = 0
+  ip_protocol = "tcp"
+  to_port     = 0
 }
 
 resource "aws_vpc_security_group_ingress_rule" "allow_mysql_ipv4" {
@@ -73,6 +80,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_mysql_ipv4" {
   from_port         = 3306
   ip_protocol       = "tcp"
   to_port           = 3306
+  
 }
 
 resource "aws_vpc_security_group_ingress_rule" "self_reference_mysql" {
