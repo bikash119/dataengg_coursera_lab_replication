@@ -24,7 +24,7 @@ resource "aws_glue_crawler" "lab1" {
 
   jdbc_target {
     connection_name = aws_glue_connection.lab1.name
-    path            = "mysqldb/%"
+    path            = "mydb/%"
   }
 }
 
@@ -34,7 +34,7 @@ resource "aws_glue_job" "lab1" {
 
   command {
     name            = "glueetl"
-    script_location = "s3://aws_s3_bucket.scripts.id/aws_s3_object.glue_job_script.id"
+    script_location = "s3://${aws_s3_bucket.scripts.id}/${aws_s3_object.glue_job_script.id}"
     python_version  = 3
   }
 }
