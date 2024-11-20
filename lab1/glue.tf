@@ -13,7 +13,7 @@ resource "aws_glue_connection" "lab1" {
     physical_connection_requirements {
     availability_zone      = aws_subnet.private_subnet_a.availability_zone
     security_group_id_list = [aws_security_group.mysql_sg.id]
-    subnet_id              = aws_subnet.private_subnet_a.id
+    subnet_id              = aws_subnet.private_subnet_b.id
   }
 }
 
@@ -24,7 +24,7 @@ resource "aws_glue_crawler" "example" {
 
   jdbc_target {
     connection_name = aws_glue_connection.lab1.name
-    path            = "mysqldb/%"
+    path            = "mydb/%"
   }
 }
 

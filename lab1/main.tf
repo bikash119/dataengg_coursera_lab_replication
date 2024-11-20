@@ -26,13 +26,11 @@ resource "aws_security_group" "allow_ssh" {
   tags = {
     Name = "allow_ssh"
   }
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
-  }
+}
+resource "aws_vpc_security_group_egress_rule" "ssh_egress" {
+  security_group_id = aws_security_group.allow_ssh.id
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = "-1"
 }
 
 data "aws_ec2_managed_prefix_list" "ec2_instance_connect" {
@@ -55,13 +53,11 @@ resource "aws_security_group" "mysql_sg" {
   tags = {
     Name = "allow_mysql"
   }
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
-  }
+}
+resource "aws_vpc_security_group_egress_rule" "mysql_sg_egress" {
+  security_group_id = aws_security_group.mysql_sg.id
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = "-1"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "allow_mysql_ipv4" {
@@ -89,6 +85,3 @@ resource "aws_db_subnet_group" "lab1" {
     Name = "My DB subnet group"
   }
 }
-# variables
-
-# outputs

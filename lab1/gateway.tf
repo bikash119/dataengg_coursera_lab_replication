@@ -61,12 +61,12 @@ resource "aws_nat_gateway" "lab1_b" {
 
 ## Allocate Elastic IP for NAT Gateway A
 resource "aws_eip" "nat_eip_a" { 
-  vpc = true
+  domain = "vpc"
 }
 
 ## Allocate Elastic IP for NAT Gateway B
 resource "aws_eip" "nat_eip_b" {
-  vpc = true
+  domain = "vpc"
 }
 
 resource "aws_route_table" "private_a"{
