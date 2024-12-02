@@ -1,0 +1,5 @@
+- Install aws cli
+- export AWS Key and secret environment variable in your shell
+- `terraform init`
+- `terraform plan`
+- `terraform apply`
