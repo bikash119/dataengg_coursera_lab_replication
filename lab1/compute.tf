@@ -20,7 +20,7 @@ resource "aws_instance" "bastion_host" {
     }
   }
   instance_type = "t3.micro"
-  subnet_id = aws_subnet.public_subnet_a.id
+  subnet_id = module.vpc.public_subnets[0]
   associate_public_ip_address = true
   availability_zone = data.aws_availability_zones.available.names[0]
   vpc_security_group_ids = [aws_security_group.allow_ssh.id]
@@ -29,7 +29,7 @@ resource "aws_instance" "bastion_host" {
     sudo yum update -y
     sudo yum install -y mysql
     sudo yum install -y ec2-instance-connect
-    yum install -y aws-cli
+    sudo yum install -y aws-cli
 
     # Create script directory
     mkdir -p /opt/mysql-loader
@@ -39,18 +39,18 @@ resource "aws_instance" "bastion_host" {
     #!/bin/bash
     
     # Download SQL file from S3
-    aws s3 cp s3://aws_s3_bucket.scripts.id/aws_s3_object.mysql_data_script.id /opt/mysql-loader/data.sql
+    aws s3 cp s3://${aws_s3_bucket.scripts.id}/${aws_s3_object.mysql_data_script.id} /opt/mysql-loader/data.sql
     
     # Execute SQL file
     mysql \
-      -h aws_db_instance.default.endpoint \
+      --host ${aws_db_instance.default.address} \
       -u foo \
-      -p foobarbaz \
-      mydb \
+      --database mydb \
+      -pfoobarbaz \
       < /opt/mysql-loader/data.sql
     
     # Clean up
-    rm -f /opt/mysql-loader/data.sql
+    # rm -f /opt/mysql-loader/data.sql
     SCRIPT
     
     # Make script executable
@@ -67,6 +67,7 @@ resource "aws_instance" "bastion_host" {
   tags = {
     Name = "Bastion Host"
   }
+  iam_instance_profile = aws_iam_instance_profile.bastion_profile.name
 }
 
 resource "aws_instance" "bastion_host_b" {
@@ -74,11 +75,11 @@ resource "aws_instance" "bastion_host_b" {
   instance_market_options {
     market_type = "spot"
     spot_options {
-      max_price = 0.0032
+      max_price = 0.0034
     }
   }
   instance_type = "t3.micro"
-  subnet_id = aws_subnet.public_subnet_b.id
+  subnet_id = module.vpc.public_subnets[1]
   associate_public_ip_address = true
   availability_zone = data.aws_availability_zones.available.names[1]
   vpc_security_group_ids = [aws_security_group.allow_ssh.id]

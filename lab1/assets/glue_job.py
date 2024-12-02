@@ -36,6 +36,7 @@ customers = glueContext.create_dynamic_frame.from_options(
     },
     transformation_ctx="customers",
 )
+print("Extracted Customer information from mysql rds")
 
 orders = glueContext.create_dynamic_frame.from_options(
     connection_type="mysql",

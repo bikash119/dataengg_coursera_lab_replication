@@ -90,7 +90,8 @@ data "aws_iam_policy_document" "glue_service_policy" {
     ]
     resources = [
       "arn:aws:s3:::aws-glue-*/*",
-      "arn:aws:s3:::*/*aws-glue-*/*"
+      "arn:aws:s3:::*/*aws-glue-*/*",
+      "arn:aws:s3:::datalake-${data.aws_caller_identity.current.account_id}-*/*"
     ]
   }
 
@@ -100,7 +101,8 @@ data "aws_iam_policy_document" "glue_service_policy" {
     actions = ["s3:GetObject"]
     resources = [
       "arn:aws:s3:::crawler-public*",
-      "arn:aws:s3:::aws-glue-*"
+      "arn:aws:s3:::aws-glue-*",
+      "arn:aws:s3:::scripts-${data.aws_caller_identity.current.account_id}-*/*"
     ]
   }
 
@@ -162,4 +164,48 @@ resource "aws_iam_role" "glue_role" {
 resource "aws_iam_role_policy_attachment" "glue_policy_role_attachment" {
   role       = aws_iam_role.glue_role.name
   policy_arn = aws_iam_policy.glue_service_policy.arn
+}
+
+resource "aws_iam_role" "bastion_role" {
+  name = "bastion-host-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+resource "aws_iam_role_policy" "bastion_policy" {
+  name = "bastion-host-policy"
+  role = aws_iam_role.bastion_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "${aws_s3_bucket.scripts.arn}",
+          "${aws_s3_bucket.scripts.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+# Instance profile
+resource "aws_iam_instance_profile" "bastion_profile" {
+  name = "bastion-host-profile"
+  role = aws_iam_role.bastion_role.name
 }

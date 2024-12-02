@@ -11,7 +11,7 @@ terraform {
 
 # Configure the AWS Provider
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
 data "aws_availability_zones" "available" {
   state = "available"
@@ -21,18 +21,14 @@ data "aws_availability_zones" "available" {
 resource "aws_security_group" "allow_ssh" {
   name              = "allow_ssh"
   description       = "Allow SSH inbound traffic and all outbound traffic"
-  vpc_id            = aws_vpc.lab1.id
+  vpc_id            = module.vpc.vpc_id
 
-  tags = {
-    Name = "allow_ssh"
-  }
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
-  }
+  tags = var.resource_tags
+}
+resource "aws_vpc_security_group_egress_rule" "ssh_egress" {
+  security_group_id = aws_security_group.allow_ssh.id
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = "-1"
 }
 
 data "aws_ec2_managed_prefix_list" "ec2_instance_connect" {
@@ -50,22 +46,12 @@ resource "aws_vpc_security_group_ingress_rule" "allow_ssh_ipv4" {
 resource "aws_security_group" "mysql_sg" {
   name                   = "allow_mysql"
   description            = "Allow tcp inbound traffic and all outbound traffic"
-  vpc_id                 = aws_vpc.lab1.id
+  vpc_id                 = module.vpc.vpc_id
   revoke_rules_on_delete = true
   tags = {
     Name = "allow_mysql"
   }
-  timeouts {
-    delete = "10m"
-  }
-
-  lifecycle {
-    # This helps with deletion order
-    create_before_destroy = true
-  }
-
 }
-
 resource "aws_vpc_security_group_egress_rule" "mysql_sg_egress" {
   security_group_id = aws_security_group.mysql_sg.id
   cidr_ipv4   = "0.0.0.0/0"
@@ -74,30 +60,27 @@ resource "aws_vpc_security_group_egress_rule" "mysql_sg_egress" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_mysql_ipv4" {
   security_group_id = aws_security_group.mysql_sg.id
-  cidr_ipv4         = aws_subnet.public_subnet_a.cidr_block
+  cidr_ipv4         = module.vpc.public_subnets_cidr_blocks[0]
   from_port         = 3306
   ip_protocol       = "tcp"
   to_port           = 3306
   
 }
 
-# resource "aws_vpc_security_group_ingress_rule" "self_reference_mysql" {
-#   security_group_id              = aws_security_group.mysql_sg.id
-#   referenced_security_group_id   = aws_security_group.mysql_sg.id
-#   from_port                      = 0
-#   ip_protocol                    = "tcp"
-#   to_port                        = 65535
-# }
+resource "aws_vpc_security_group_ingress_rule" "self_reference_mysql" {
+  security_group_id              = aws_security_group.mysql_sg.id
+  referenced_security_group_id   = aws_security_group.mysql_sg.id
+  from_port                      = 0
+  ip_protocol                    = "tcp"
+  to_port                        = 65535
+}
 
 
 resource "aws_db_subnet_group" "lab1" {
   name       = "private_subnet_group"
-  subnet_ids = [aws_subnet.private_subnet_a.id, aws_subnet.private_subnet_b.id]
+  subnet_ids = module.vpc.private_subnets
 
   tags = {
     Name = "My DB subnet group"
   }
 }
-# variables
-
-# outputs

@@ -1,41 +1,18 @@
 ## Create a VPC
-resource "aws_vpc" "lab1" {
-  cidr_block = "10.0.0.0/16"
+module "vpc" {
+  source = "terraform-aws-modules/vpc/aws"
+  version = "5.7.0"
+  azs             = data.aws_availability_zones.available.names
+  cidr            = var.vpc_cidr_block
+  private_subnets = slice(var.private_subnet_cidr_blocks, 0, var.private_subnet_count)
+  public_subnets  = slice(var.public_subnet_cidr_blocks, 0, var.public_subnet_count)
+  name            = var.resource_tags["project"]
 }
 
-## Create 4 subnets. 2 Private and 2 Public. One of each availability zone.
-resource "aws_subnet" "private_subnet_a" {
-  vpc_id     = aws_vpc.lab1.id
-  cidr_block = "10.0.1.0/24"
-  availability_zone = data.aws_availability_zones.available.names[0]
 
-  tags = {
-    Name = "Private Subnet AZ A"
-  }
-}
-resource "aws_subnet" "private_subnet_b" {
-  vpc_id     = aws_vpc.lab1.id
-  cidr_block = "10.0.2.0/24"
-  availability_zone = data.aws_availability_zones.available.names[1]
-
-  tags = {
-    Name = "Private Subnet AZ B"
-  }
-}
-resource "aws_subnet" "public_subnet_a" {
-  vpc_id     = aws_vpc.lab1.id
-  cidr_block = "10.0.3.0/24"
-  availability_zone = data.aws_availability_zones.available.names[0]
-
-  tags = {
-    Name = "Public Subnet AZ A"
-  }
-}
-resource "aws_subnet" "public_subnet_b" {
-  vpc_id     = aws_vpc.lab1.id
-  cidr_block = "10.0.4.0/24"
-  availability_zone = data.aws_availability_zones.available.names[1]
-  tags = {
-    Name = "Public Subnet AZ B"
-  }
+# Create a route from private subnets to the NAT Gateway
+resource "aws_route" "private_subnet_to_nat_gateway" {
+  route_table_id         = module.vpc.private_route_table_ids[0]
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.lab1_a.id
 }
